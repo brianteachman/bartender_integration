@@ -1,7 +1,7 @@
 import socket
 import time
 
-from printer import Bartender
+from file_integration import CsvWriter
 
 HOST = "10.0.180.201"  # The IP address of the scanner
 PORT = 9004  # Port to listen on (non-privileged ports are > 1023)
@@ -10,7 +10,7 @@ PORT = 9004  # Port to listen on (non-privileged ports are > 1023)
 class MainApp():
 
     def __init__(self):
-        self.printer = Bartender()
+        pass
 
     def step(self):
         ''' The business logic '''
@@ -26,16 +26,19 @@ class MainApp():
                 if data:
                     print(f"Received {data!r}")
                     
-                    res = self.printer.send(data)
-                    if res:
-                        print(f"Printer response: {res!r}")
+                    # TODO: Check data
+
+                    # Pass data to BarTender File Integration
+                    CsvWriter.save(data)
+
 
     def run(self, is_running=True):
         ''' Run the business logic in a loop '''
-        self.step()
+        if is_running:
+            self.step()
 
     def exit(self):
-        ''' Close COM port '''
+        ''' Shutdown process '''
         pass
 
 
