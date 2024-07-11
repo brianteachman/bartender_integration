@@ -1,6 +1,7 @@
 import socket
 import time
 
+from data_guard import Validation
 from file_integration import CsvWriter
 
 HOST = "10.0.180.201"  # The IP address of the scanner
@@ -22,15 +23,18 @@ class MainApp():
 
             while True:
                 data = s.recv(1024)
-                # Process serial data here
                 if data:
                     print(f"Received {data!r}")
                     
-                    # TODO: Check data
+                    # Check and process data
+                    if Validation.check(data):
+                            
+                        # Pass data to BarTender File Integration
+                        CsvWriter.save(data)
 
-                    # Pass data to BarTender File Integration
-                    CsvWriter.save(data)
-
+                    else:
+                        # TODO: Handle incorrect data
+                        pass
 
     def run(self, is_running=True):
         ''' Run the business logic in a loop '''
