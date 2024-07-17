@@ -2,3 +2,5 @@ venv
 refs
 data/*
 __pycache__
+
+.env

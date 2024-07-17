@@ -1,5 +1,5 @@
 
-CURRENT_LINE = '07'
+DEFAULT_LINE = '07'
 
 def left(s,chars):
     return s[:chars]
@@ -13,11 +13,14 @@ def mid(s,start,end):
 
 class Validation():
 
-    def check(serial_number):
+    def check(serial_number, m_line=None):
         is_valid = False
 
+        if not m_line:
+            m_line = DEFAULT_LINE
+
         # Make sure Serial Number has the correct format
-        if len(serial_number)==14 and left(serial_number,6).isnumeric() and right(serial_number,6).isnumeric() and not mid(test_val, 6, 7).isnumeric() and mid(test_val, 8, 9) == CURRENT_LINE:
+        if len(serial_number)==14 and left(serial_number,6).isnumeric() and right(serial_number,6).isnumeric() and not mid(serial_number, 6, 7).isnumeric() and mid(serial_number, 8, 9) == m_line:
             is_valid = True
 
         return is_valid
