@@ -28,7 +28,7 @@ class BarTenderScannerService(PythonService):
         '''
         os.chdir(BASEPATH)
         self.env = dotenv_values()
-        self.log = get_logger(__name__, log_file=LOG_FILE, debug=True)
+        self.log = get_logger(__name__, log_file=LOG_FILE, debug=False)
         self.is_running = True
         self.first_time = True
         self.last_time = time.time()
