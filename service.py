@@ -57,19 +57,21 @@ class BarTenderScannerService(PythonService):
             serial_string = data.decode('utf-8')
             serial_number = serial_string[:14]
 
-            print(f"Serial to label: {serial_number}")
+            # print(f"Serial to label: {serial_number}")
             self.log.info(f"Serial to label: {serial_number}")
 
             # Check and process data
             if Validation.check(serial_number, m_line=self.env["CURRENT_LINE"]):
-                # self.log.info(f"Data is valid: {serial_number}")
+                self.log.info(f"Data: is valid: {serial_number}")
                 
                 # Pass data to BarTender File Integration
-                CsvWriter.save(data=serial_number, header=self.env["INTEGRATION_FILE_HEADERNAME"], file_name=self.env["INTEGRATION_FILENAME"])
-                self.log.info(f"Data saved to integration file")
-            # else:
-            #     # TODO: Handle incorrect data
-            #     pass
+                CsvWriter.save(data=serial_number, 
+                               header=self.env["INTEGRATION_FILE_HEADERNAME"], 
+                               file_name=self.env["INTEGRATION_FILENAME"])
+                self.log.info(f"Data: saved to integration file")
+            else:
+                # TODO: Handle incorrect data
+                self.log.error(f"Data: scanner read not valid serial number")
 
             self.last_time = this_time
 
@@ -80,7 +82,10 @@ class BarTenderScannerService(PythonService):
         '''
         print("App started")
         self.log.info("App started")
-        while self.is_running:
+        while True:
+            if not self.is_running:
+                break
+
             try:
                 host = self.env["SCANNER_HOST"]
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
