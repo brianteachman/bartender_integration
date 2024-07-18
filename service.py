@@ -11,6 +11,7 @@ from python_service import PythonService
 BASEPATH = os.path.abspath(os.path.dirname(__file__))
 LOG_FILE = BASEPATH + '\\data\\service.log'
 
+# Raise process priority level to HIGH priority
 setpriority(priority=4)
 
 class BarTenderScannerService(PythonService):
@@ -51,13 +52,11 @@ class BarTenderScannerService(PythonService):
         if data and (self.first_time or debounced):
             self.first_time = False
 
-            # print(f"Received {data!r}")
             self.log.info(f"Received {data!r}")
             
             serial_string = data.decode('utf-8')
             serial_number = serial_string[:14]
 
-            # print(f"Serial to label: {serial_number}")
             self.log.info(f"Serial to label: {serial_number}")
 
             # Check and process data
@@ -80,8 +79,7 @@ class BarTenderScannerService(PythonService):
         '''
         Interface Method: Override method to perform the service function
         '''
-        print("App started")
-        self.log.info("App started")
+        self.log.info(f"App started")
         while True:
             if not self.is_running:
                 break
@@ -91,12 +89,11 @@ class BarTenderScannerService(PythonService):
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.connect((self.env["SCANNER_HOST"], int(self.env["SCANNER_PORT"])))
                     self.log.info(f"Connected to {host}")
-                    data = s.recv(1024)
+                    data = s.recv(1024)  # NOTE: This is a blocking call
                     self.step(data)
 
             except Exception as err:
                 self.log.error(err)
-                # print("Error: " + str(err))
                 self.stop()
 
 
