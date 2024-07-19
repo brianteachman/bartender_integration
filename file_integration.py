@@ -2,24 +2,20 @@ import csv
 
 # print(csv.list_dialects())
 
-# Name of csv file
-FILENAME = 'C:\Data\scan\data.csv'
-HEADERNAME = 'SerialNumber'
-
 
 class CsvWriter():
     ''' Singleton CSV Handler '''
 
-    def save(data):
+    def save(data, header=None, file_name=None):
 
         # my data rows as dictionary objects
-        mydict = [{HEADERNAME: data}]
+        mydict = [{header: data}]
 
         # field names
-        fields = [HEADERNAME]
+        fields = [header]
 
         # writing to csv file
-        with open(FILENAME, 'w', newline='') as csvfile:
+        with open(file_name, 'w', newline='') as csvfile:
 
             # creating a csv dict writer object
             writer = csv.DictWriter(csvfile, fieldnames=fields)
