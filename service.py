@@ -87,10 +87,36 @@ class BarTenderScannerService(PythonService):
             try:
                 host = self.env["SCANNER_HOST"]
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    # Set timeout for connection 
+                    s.settimeout(10)
+                    
                     s.connect((self.env["SCANNER_HOST"], int(self.env["SCANNER_PORT"])))
                     self.log.info(f"Connected to {host}")
-                    data = s.recv(1024)  # NOTE: This is a blocking call
-                    self.step(data)
+                    
+                    # Set timeout for transmission
+                    s.settimeout(3)
+
+                    # Switching here to treating the socket as a file buffer stream in order to 
+                    # listen for new line character '\n' or carriage return '\r'
+                    # This allows for a faster receive and transmit 
+                    with s.makefile('rb') as sock_buffer:
+                        while self.is_running:
+                            try:
+                                line = sock_buffer.readline()
+
+                                # Terminate stream read if no information is present
+                                if not line:
+                                    break
+                                
+                                # data = s.recv(1024)  # NOTE: This is a blocking call - not needed when expecting newline character '\n'
+                                data = line.strip() # Removes newline character
+                                self.step(data)
+                            
+                            except socket.timeout:
+                                self.log.warning("Timeout: No data received in 3 seconds")
+                                break
+
+
 
             except Exception as err:
                 self.log.error(err)
