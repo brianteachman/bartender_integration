@@ -79,47 +79,65 @@ class BarTenderScannerService(PythonService):
         '''
         Interface Method: Override method to perform the service function
         '''
-        self.log.info(f"App started")
-        while True:
-            if not self.is_running:
-                break
+        self.log.info(f"TCP Server started")
 
+        host = self.env["LOCAL_HOST"]
+        port = int(self.env["LOCAL_PORT"])
+
+        while self.is_running:
             try:
-                host = self.env["SCANNER_HOST"]
+                self.log.info(f"Starting up server on {host}:{port}")
+                
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    # Set timeout for connection 
-                    s.settimeout(10)
-                    
-                    s.connect((self.env["SCANNER_HOST"], int(self.env["SCANNER_PORT"])))
-                    self.log.info(f"Connected to {host}")
-                    
-                    # Set timeout for transmission
-                    s.settimeout(3)
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    s.bind((host, port))
+                    s.listen(1)
+                    self.log.info(f"Listening on {host}:{port}")
 
                     # Switching here to treating the socket as a file buffer stream in order to 
                     # listen for new line character '\n' or carriage return '\r'
                     # This allows for a faster receive and transmit 
-                    with s.makefile('rb') as sock_buffer:
-                        while self.is_running:
-                            try:
-                                line = sock_buffer.readline()
+                    while self.is_running:
+                        try:
+                            conn, addr = s.accept()
 
-                                # Terminate stream read if no information is present
-                                if not line:
-                                    break
-                                
-                                # data = s.recv(1024)  # NOTE: This is a blocking call - not needed when expecting newline character '\n'
-                                data = line.strip() # Removes newline character
-                                self.step(data)
-                            
-                            except socket.timeout:
-                                self.log.warning("Timeout: No data received in 3 seconds")
-                                break
+                            if addr[0] != self.env["SCANNER_HOST"]:
+                                # Refuse connections to all except SCANNER_HOST
+                                self.log.warning(f"Refused connection from {addr[0]}")
+                                self.is_running = False
 
+                            self.log.info(f"Client {addr} connected")
+
+                            with conn:
+                                conn.settimeout(3)
+
+                                with conn.makefile('rb') as sock_file:
+                                    while self.is_running:
+                                        try:
+                                            line = sock_file.readline()
+
+                                            # Terminate stream read if no information is present
+                                            if not line:
+                                                self.log.info("Client closed connection")
+                                                break
+                                            
+                                            self.log.info(f"Raw line: {line!r}")
+                                            data = line.strip()
+                                            self.step(data)
+
+                                        except socket.timeout:
+                                            self.log.warning("Timeout: No data received in 3 seconds")
+
+                                        finally:
+                                            self.log.info("Scan processed, closing connection.")
+                                            break
+
+                        except Exception as e:
+                            self.log.error(f"Client connection error: {e}")
 
 
             except Exception as err:
-                self.log.error(err)
+                self.log.error(f"Server setup error on:{host}:{port} {err}")
                 self.stop()
 
 
